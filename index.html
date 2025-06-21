@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF Order Label Extractor</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f7fa;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .upload-container {
+      border: 2px dashed #4a90e2;
+      background-color: #fff;
+      padding: 2rem;
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .upload-container:hover {
+      background-color: #f0f8ff;
+    }
+
+    #file-input {
+      display: none;
+    }
+
+    .button {
+      margin-top: 1.5rem;
+      padding: 0.8rem 1.5rem;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    .loader {
+      margin-top: 1rem;
+      display: none;
+      color: #555;
+    }
+
+    .success {
+      margin-top: 1rem;
+      color: green;
+    }
+
+    .error {
+      margin-top: 1rem;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Order Label to Excel Extractor</h1>
+
+  <label class="upload-container" for="file-input">
+    <p>Click or drag your PDF file here</p>
+    <input type="file" id="file-input" accept="application/pdf" />
+  </label>
+
+  <button id="upload-btn" class="button" disabled>Upload & Extract</button>
+
+  <div id="loader" class="loader">Processing... Please wait.</div>
+  <div id="status" class="success"></div>
+
+  <script>
+    const fileInput = document.getElementById("file-input");
+    const uploadBtn = document.getElementById("upload-btn");
+    const loader = document.getElementById("loader");
+    const status = document.getElementById("status");
+    let selectedFile = null;
+
+    fileInput.addEventListener("change", function () {
+      selectedFile = fileInput.files[0];
+      if (selectedFile) {
+        uploadBtn.disabled = false;
+        status.textContent = '';
+      }
+    });
+
+    uploadBtn.addEventListener("click", async () => {
+      if (!selectedFile) return;
+
+      loader.style.display = "block";
+      uploadBtn.disabled = true;
+      status.textContent = "";
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      try {
+        const response = await fetch("https://your-api-endpoint.com/extract", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to process the file.");
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "extracted_orders.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        status.textContent = "Download started!";
+        status.className = "success";
+      } catch (error) {
+        status.textContent = "Error: " + error.message;
+        status.className = "error";
+      } finally {
+        loader.style.display = "none";
+        uploadBtn.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>
